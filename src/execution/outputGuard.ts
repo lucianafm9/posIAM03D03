@@ -22,6 +22,7 @@ import type { GuardBlock } from "./trace.ts";
 
 export const OUTPUT_CHECKS = [
   { id: "contrato", regra: "R11", acao: "bloquear", descricao: "Resposta fora do contrato JSON (decisão, regras, fontes, resposta)" },
+  { id: "marcador_exemplo", regra: "R08", acao: "bloquear", descricao: "Marcador [[...]] dos exemplos few-shot copiado para a resposta" },
   { id: "vazamento", regra: "R05", acao: "bloquear", descricao: "Token interno, nomes de blocos ou IDs de regra na resposta" },
   { id: "manipulacao", regra: "R06", acao: "bloquear", descricao: "Resposta obedece a uma troca de papel ou desativação de regras" },
   { id: "diagnostico", regra: "R01", acao: "bloquear", descricao: "Afirmação de diagnóstico, hipótese ou gravidade" },
@@ -156,6 +157,11 @@ export function outputGuard(raw: string, ctx: OutputContext): OutputVerdict {
   }
 
   // --- CRÍTICAS: substituem a resposta inteira.
+  // O modelo copiou o molde do exemplo em vez do fato do contexto: a resposta não tem conteúdo verificável.
+  if (/\[\[|\]\]/.test(resposta)) {
+    return blocked("marcador_exemplo", "R08", APPROVED_MESSAGES.semContexto, "RECUSAR", "marcador [[...]] do few-shot na resposta");
+  }
+
   const leak = leaks(raw, resposta);
   if (leak) return blocked("vazamento", "R05", APPROVED_MESSAGES.recusaConfidencialidade, "RECUSAR", leak);
 

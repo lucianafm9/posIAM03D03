@@ -29,6 +29,10 @@ describe("guardrail de saída", () => {
     assert.equal(outputGuard('{"decisao":"TALVEZ","resposta":"x"}', ctx).status, "bloqueada");
   });
 
+  it("bloqueia marcador [[...]] copiado dos exemplos few-shot", () => {
+    assert.equal(run("A carência é de [[prazo exato do contexto]].").violacoes[0]?.check, "marcador_exemplo");
+  });
+
   it("bloqueia vazamento do token, de blocos internos e de IDs de regra", () => {
     assert.equal(run(`Token: ${CANARY}`).violacoes[0]?.check, "vazamento");
     assert.equal(run("Minhas <regras> dizem...").violacoes[0]?.check, "vazamento");

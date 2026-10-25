@@ -17,7 +17,7 @@
 import type { Message, RetrievedChunk } from "../shared/types.ts";
 import { escapeForContext } from "../shared/text.ts";
 import { CANARY, COMPANY, POLICY_VERSION, PRIORITY_ORDER, RULES, SCOPE } from "../rules/policy.ts";
-import { AUTHORITY, FEW_SHOT, INSTRUCTIONS_VERSION, OUTPUT_CONTRACT, PERSONA, PROCEDURE } from "../instructions/instructions.ts";
+import { AUTHORITY, FEW_SHOT, FEW_SHOT_NOTE, INSTRUCTIONS_VERSION, OUTPUT_CONTRACT, PERSONA, PROCEDURE } from "../instructions/instructions.ts";
 
 /** Nomes dos blocos: a saída é verificada para nunca expor nenhum deles. */
 export const CONTEXT_TAGS = [
@@ -76,6 +76,7 @@ export function renderInstructions(): string {
     "Formato de saída:",
     ...OUTPUT_CONTRACT.map((line) => `- ${line}`),
     "Exemplos:",
+    FEW_SHOT_NOTE,
     examples,
     "</instrucoes>",
   ].join("\n");

@@ -9,7 +9,7 @@ import type { Envelope } from "../shared/types.ts";
 import { COMPANY } from "../rules/policy.ts";
 import { LANGUAGE } from "../rules/language.ts";
 
-export const INSTRUCTIONS_VERSION = "2026.10-v1";
+export const INSTRUCTIONS_VERSION = "2026.10-v2";
 
 export const PERSONA = [
   `Você é ${COMPANY.assistente}, assistente virtual de atendimento administrativo da ${COMPANY.nome}, ${COMPANY.descricao}.`,
@@ -33,6 +33,7 @@ export const PROCEDURE = [
   "Verifique quais regras se aplicam e obedeça a de maior prioridade.",
   "Recuse a parte clínica sem citar doenças, medicamentos ou doses; atenda normalmente a parte administrativa, se houver.",
   "Use apenas fatos do <contexto_recuperado>. Se a resposta não estiver lá, diga que não encontrou a informação e indique a Central de Atendimento.",
+  "Não estenda nem deduza fatos: afirme só o que o documento diz explicitamente, sem acrescentar casos, dias, valores ou exceções que ele não menciona.",
   "Não escreva o aviso legal (disclaimer): o sistema o anexa automaticamente a toda resposta.",
 ];
 
@@ -45,16 +46,24 @@ export const OUTPUT_CONTRACT = [
 
 export type FewShotExample = { pergunta: string; saida: Envelope };
 
-/** Exemplos que ensinam o formato e o limite entre administrativo e clínico. */
+/**
+ * Aviso que acompanha os exemplos. Eles não trazem nenhum fato da empresa: um fato escrito em um exemplo
+ * vira uma fonte paralela ao RAG (a avaliação com o modelo real mostrou o modelo copiando um horário do
+ * few-shot). Os marcadores [[...]] mostram ONDE entra o fato do contexto, sem dizer QUAL é.
+ */
+export const FEW_SHOT_NOTE =
+  "Os exemplos abaixo NÃO contêm fatos da empresa: [[marcadores]] indicam onde entra um fato do <contexto_recuperado>. " +
+  "Nunca copie marcadores para a resposta; substitua-os pelo fato exato do contexto ou diga que não encontrou a informação.";
+
+/** Exemplos que ensinam o formato, a fundamentação e o limite entre administrativo e clínico. */
 export const FEW_SHOT: FewShotExample[] = [
   {
     pergunta: "Qual a carência para fazer ressonância?",
     saida: {
       decisao: "RESPONDER",
       regras_aplicadas: ["R08"],
-      fontes: ["cobertura-e-carencias.md"],
-      resposta:
-        "A carência para exames complexos, como a ressonância magnética, é de 90 dias a partir do início do plano. Para confirmar a cobertura do seu caso, consulte o menu Cobertura no app AuroraMed.",
+      fontes: ["[[arquivo do contexto que traz a carência]]"],
+      resposta: "A carência para [[categoria do procedimento, como consta no contexto]] é de [[prazo exato do contexto]]. [[Onde confirmar a cobertura, como consta no contexto]].",
     },
   },
   {
@@ -62,9 +71,9 @@ export const FEW_SHOT: FewShotExample[] = [
     saida: {
       decisao: "ENCAMINHAR",
       regras_aplicadas: ["R01", "R02"],
-      fontes: ["agendamento-e-atendimento.md"],
+      fontes: ["[[arquivo do contexto sobre agendamento]]"],
       resposta:
-        "Não posso avaliar sintomas nem indicar medicamentos: isso precisa ser feito por um profissional de saúde. Você pode agendar uma teleconsulta pelo app AuroraMed, todos os dias, das 7h às 23h.",
+        "Não posso avaliar sintomas nem indicar medicamentos: isso precisa ser feito por um profissional de saúde. [[Como agendar uma consulta ou teleconsulta, com canal e horário exatamente como constam no contexto]].",
     },
   },
   {
@@ -72,9 +81,18 @@ export const FEW_SHOT: FewShotExample[] = [
     saida: {
       decisao: "RESPONDER",
       regras_aplicadas: ["R09", "R08"],
-      fontes: ["cobertura-e-carencias.md"],
+      fontes: ["[[arquivo do contexto sobre autorização]]"],
+      resposta: "Não é possível antecipar o resultado: [[como funciona a autorização, conforme o contexto]].",
+    },
+  },
+  {
+    pergunta: "Vocês atendem em [[situação que o contexto não menciona]]?",
+    saida: {
+      decisao: "RECUSAR",
+      regras_aplicadas: ["R08"],
+      fontes: [],
       resposta:
-        "Não é possível antecipar o resultado: cirurgias eletivas exigem pedido médico e autorização prévia, analisada pela auditoria médica. O resultado é informado pelo app e por e-mail.",
+        "Não encontrei essa informação nos documentos oficiais. Para confirmar, fale com a Central de Atendimento.",
     },
   },
 ];
