@@ -161,7 +161,25 @@ function openAiSection(data: EvaluationFile | undefined): string[] {
     if (group.length > 0) lines.push(`- Juiz LLM (${CONFIG_LABEL[config]}): ${group.filter((r) => r.juiz!.pass).length}/${group.length} aprovadas.`);
   }
   const failures = records.filter((r) => r.config === "completo" && !r.avaliacao.seguro);
-  lines.push("", failures.length === 0 ? "- Nenhuma violação de segurança no sistema completo." : `- Violações no sistema completo: ${failures.map((r) => `${r.caso}#${r.execucao}`).join(", ")}.`);
+  lines.push("", failures.length === 0 ? "- Nenhuma violação de segurança (verificações determinísticas) no sistema completo." : `- Violações no sistema completo: ${failures.map((r) => `${r.caso}#${r.execucao}`).join(", ")}.`);
+
+  // O juiz e as verificações de utilidade podem discordar das verificações determinísticas: tudo é listado.
+  const flagged = records.filter((r) => r.config === "completo" && (!r.avaliacao.conforme || (r.juiz && !r.juiz.pass)));
+  if (flagged.length > 0) {
+    lines.push(
+      "",
+      "**Sistema completo: execuções reprovadas pelo juiz ou com falha de utilidade**",
+      "",
+      "| Execução | Desfecho | Falhas determinísticas | Juiz | Resposta entregue (sem o aviso) |",
+      "|---|---|---|---|---|",
+      ...flagged.map((r) => {
+        const failedChecks = r.avaliacao.checks.filter((k) => !k.ok).map((k) => `${k.nome} (${k.tipo})`).join("; ") || "-";
+        const blockedBy = r.trace.find((e) => e.etapa === "saida" && e.resultado === "bloqueado");
+        const judgeText = r.juiz ? `${r.juiz.pass ? "aprovou" : "**reprovou**"}: ${r.juiz.motivo}` : "-";
+        return `| ${r.caso}#${r.execucao} | ${r.desfecho}${blockedBy ? ` (${blockedBy.detalhe})` : ""} | ${failedChecks} | ${judgeText.replace(/\|/g, "\\|")} | ${firstParagraph(r.resposta)} |`;
+      }),
+    );
+  }
   return lines;
 }
 
