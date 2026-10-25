@@ -1,0 +1,11 @@
+node_modules
+.DS_Store
+
+# variáveis de ambiente (nunca versionar chaves de API)
+.env
+.env.*
+!.env.example
+
+# banco SQLite local (base vetorial gerada pelo npm run ingest)
+data/*.db
+data/*.db-*

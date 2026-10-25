@@ -1,0 +1,30 @@
+{
+  "name": "pos-ia-m03-d03-enforcement-saude",
+  "version": "1.0.0",
+  "description": "Micro-capstone: assistente de saúde com enforcement de políticas corporativas (camadas de regras, instruções e execução), context injection sobre RAG, casos adversos e relatório de validação.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/cli/index.ts",
+    "ingest": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/rag/runIngest.ts",
+    "debug": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/rag/ragDebug.ts",
+    "demo": "node --disable-warning=ExperimentalWarning src/demo/runDemo.ts",
+    "evaluate": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/evaluation/runEvaluation.ts",
+    "evaluate:offline": "node --disable-warning=ExperimentalWarning src/evaluation/runEvaluation.ts --offline",
+    "report": "node --disable-warning=ExperimentalWarning src/evaluation/report.ts",
+    "test": "node --disable-warning=ExperimentalWarning --test \"tests/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "env:setup": "node -e \"require('fs').copyFileSync('.env.example', '.env')\""
+  },
+  "dependencies": {
+    "openai": "^6.49.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  },
+  "license": "ISC"
+}
